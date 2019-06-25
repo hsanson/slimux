@@ -193,7 +193,6 @@ function! s:SelectPane(tmux_packet, ...)
 
 endfunction
 
-
 function! s:Send(tmux_packet)
 
     " Pane not selected! Save text and open selection dialog
@@ -214,9 +213,15 @@ function! s:Send(tmux_packet)
         let text = s:ExecFileTypeFn("SlimuxEscape_", [text])
       endif
 
+      if text[len(text)-1] !=# "\n"
+        let text .= "\n"
+      endif
+
       let named_buffer = s:tmux_version >= '2.0' ? '-b Slimux' : ''
       call system(g:slimux_tmux_path . ' load-buffer ' . named_buffer . ' -', text)
-      call system(g:slimux_tmux_path . ' paste-buffer ' . named_buffer . ' -t ' . target)
+      call system(g:slimux_tmux_path . ' paste-buffer ' . named_buffer . ' -p -d -t ' . target)
+
+      call system(g:slimux_tmux_path . ' paste-buffer ' . named_buffer . ' -d -t ' . target)
 
       if type == "code"
         call s:ExecFileTypeFn("SlimuxPost_", [target])
