@@ -1,28 +1,31 @@
 " Tmux integration for Vim
-" Maintainer Esa-Matti Suuronen <esa-matti@suuronen.org>
+" Author Esa-Matti Suuronen <esa-matti@suuronen.org>
+" Maintainer Horacio Sanson <hsanson@gmail.com>
 " License: MIT. See LICENSE
 
 if !exists('g:slimux_tmux_path')
     let g:slimux_tmux_path = substitute(system('command -v tmux'), '\n\+$', '', '')
 endif
-if $PREFERRED_TMUX != ''
+if $PREFERRED_TMUX !=# ''
     let g:tmux_preferred_cmd = ''
 endif
-if $TMUX != ""
+
+if $TMUX !=# ''
     let s:vim_inside_tmux = 1
 else
     let s:vim_inside_tmux = 0
 endif
+
 let s:tmux_version = system(g:slimux_tmux_path . ' -V')[5:-1] " skip 5 chars: 'tmux '
 
 let s:slimux_panelist_cmd = g:slimux_tmux_path . ' list-panes -a'
 let s:retry_send = {}
-let s:last_selected_pane = ""
+let s:last_selected_pane = ''
 
 function! s:PickPaneIdFromLine(line)
     let l:pane_match = matchlist(a:line, '\(^[^ ]\+\)\: ')
     if len(l:pane_match) == 0
-        return ""
+        return ''
     endif
     return l:pane_match[1]
 endfunction
@@ -31,10 +34,10 @@ function! SlimuxGetPaneList(lead, ...)
     let l:panes = system(s:slimux_panelist_cmd)
     let l:lst = map(split(l:panes, '\n'), 's:PickPaneIdFromLine(v:val)')
 
-    if s:vim_inside_tmux == 1 && ( !exists("g:slimux_exclude_vim_pane") || g:slimux_exclude_vim_pane != 0 )
+    if s:vim_inside_tmux == 1 && ( !exists('g:slimux_exclude_vim_pane') || g:slimux_exclude_vim_pane != 0 )
         " Remove current pane from pane list
         let l:current_pane_id = system(g:slimux_tmux_path . ' display-message -p "#{session_name}:#{window_index}.#{pane_index}"')
-        let l:current_pane_id = substitute(l:current_pane_id, "\n", "", "g")
+        let l:current_pane_id = substitute(l:current_pane_id, "\n", '', 'g')
         let l:lst = filter(l:lst, 'v:val !~ "' . l:current_pane_id . '"')
     endif
 
@@ -43,19 +46,19 @@ endfunction
 
 function! s:ConfSetPane(tmux_packet, target_pane)
   " Configure current packet
-  let a:tmux_packet["target_pane"] = a:target_pane
+  let a:tmux_packet['target_pane'] = a:target_pane
   " Save last selected pane
   let s:last_selected_pane = a:target_pane
 
-  let type = a:tmux_packet["type"]
+  let type = a:tmux_packet['type']
 
-  if type == "global"
-      if !exists("b:code_packet")
-          let b:code_packet = { "target_pane": "", "type": "code" }
+  if type ==# 'global'
+      if !exists('b:code_packet')
+          let b:code_packet = { 'target_pane': '', 'type': 'code' }
       endif
-      let b:code_packet["target_pane"] = a:tmux_packet["target_pane"]
-      let s:cmd_packet["target_pane"] = a:tmux_packet["target_pane"]
-      let s:keys_packet["target_pane"] = a:tmux_packet["target_pane"]
+      let b:code_packet['target_pane'] = a:tmux_packet['target_pane']
+      let s:cmd_packet['target_pane'] = a:tmux_packet['target_pane']
+      let s:keys_packet['target_pane'] = a:tmux_packet['target_pane']
       return
   endif
 
@@ -71,8 +74,8 @@ function! s:ConfSetPane(tmux_packet, target_pane)
 endfunction
 
 function! g:_SlimuxPickPaneFromBuf(tmux_packet, test)
-    let l:target_pane = s:PickPaneIdFromLine(getline("."))
-    if l:target_pane == ""
+    let l:target_pane = s:PickPaneIdFromLine(getline('.'))
+    if l:target_pane ==# ''
        echo "Please select a pane with enter or exit with 'q'"
        return
      endif
@@ -80,7 +83,7 @@ function! g:_SlimuxPickPaneFromBuf(tmux_packet, test)
      " Test only. Do not send the real packet or configure anything. Instead
      " just send line break to see on which pane the cursor is on.
      if a:test
-        return s:Send({ "target_pane": l:target_pane, "text": "\n", "type": "code" })
+        return s:Send({ 'target_pane': l:target_pane, 'text': "\n", 'type': 'code' })
      endif
 
      hide
@@ -92,7 +95,7 @@ function! s:SelectPane(tmux_packet, ...)
      let g:SlimuxActiveConfigure = a:tmux_packet
 
     if exists('a:1')
-        if a:1 != ""
+        if a:1 !=# ''
             call s:ConfSetPane(g:SlimuxActiveConfigure, a:1)
             return
         endif
@@ -102,25 +105,25 @@ function! s:SelectPane(tmux_packet, ...)
     belowright new
 
     " Get syntax highlighting from specified filetype
-    if !exists("g:slimux_buffer_filetype")
+    if !exists('g:slimux_buffer_filetype')
       let g:slimux_buffer_filetype = 'sh'
     endif
     let &filetype=g:slimux_buffer_filetype
 
     " Set header for the menu buffer
-    call setline(1, "# Enter: Select pane - Space/x: Test - C-c/q: Cancel")
-    call setline(2, "")
+    call setline(1, '# Enter: Select pane - Space/x: Test - C-c/q: Cancel')
+    call setline(2, '')
 
     " Add last used pane as the first
     if len(s:last_selected_pane) != 0
-      call setline(3, s:last_selected_pane . ": (last one used)")
+      call setline(3, s:last_selected_pane . ': (last one used)')
     endif
 
     " List all tmux panes at the end
-    normal G
+    normal! G
 
     " Put tmux panes in the buffer.
-    if !exists("g:slimux_pane_format")
+    if !exists('g:slimux_pane_format')
       let g:slimux_pane_format = '#{session_name}:#{window_index}.#{pane_index}: #{window_name}: #{pane_title} [#{pane_width}x#{pane_height}]#{?pane_active, (active),}'
     endif
 
@@ -133,21 +136,21 @@ function! s:SelectPane(tmux_packet, ...)
     " window only.
     if s:vim_inside_tmux == 0
         let l:command .= ' -a'
-    elseif !exists("g:slimux_select_from_current_window") || g:slimux_select_from_current_window != 1
+    elseif !exists('g:slimux_select_from_current_window') || g:slimux_select_from_current_window != 1
         let l:command .= ' -a'
     endif
 
-    if s:vim_inside_tmux == 1 && ( !exists("g:slimux_exclude_vim_pane") || g:slimux_exclude_vim_pane != 0 )
+    if s:vim_inside_tmux == 1 && ( !exists('g:slimux_exclude_vim_pane') || g:slimux_exclude_vim_pane != 0 )
         " Remove current pane from pane list
         let l:current_pane_id = system(g:slimux_tmux_path . ' display-message -p "\#{pane_id}"')
-        let l:current_pane_id = substitute(l:current_pane_id, "\n", "", "g")
-        let l:command .= " | grep -E -v " . shellescape("^" . l:current_pane_id, 1)
+        let l:current_pane_id = substitute(l:current_pane_id, "\n", '', 'g')
+        let l:command .= ' | grep -E -v ' . shellescape('^' . l:current_pane_id, 1)
     endif
 
     " Warn if no additional pane is found
-    let l:no_panes_warning = "No additional panes found"
-    if s:vim_inside_tmux == 1 && ( exists("g:slimux_select_from_current_window") && g:slimux_select_from_current_window == 1 )
-        let l:no_panes_warning .= " in current window (g:slimux_select_from_current_window is enabled)"
+    let l:no_panes_warning = 'No additional panes found'
+    if s:vim_inside_tmux == 1 && ( exists('g:slimux_select_from_current_window') && g:slimux_select_from_current_window == 1 )
+        let l:no_panes_warning .= ' in current window (g:slimux_select_from_current_window is enabled)'
     endif
     let l:command .= " || echo '" . l:no_panes_warning . "'"
 
@@ -163,8 +166,8 @@ function! s:SelectPane(tmux_packet, ...)
     execute min([ 10, line('$') ]) . 'wincmd _'
 
     " Move cursor to first item
-    normal gg
-    call setpos(".", [0, 3, 0, 0])
+    normal! gg
+    call setpos('.', [0, 3, 0, 0])
 
     " bufhidden=wipe deletes the buffer when it is hidden
     setlocal bufhidden=wipe buftype=nofile
@@ -175,7 +178,7 @@ function! s:SelectPane(tmux_packet, ...)
     nnoremap <buffer> <silent> q :hide<CR>
     nnoremap <buffer> <silent> <C-c> :hide<CR>
 
-    if !exists("g:slimux_enable_close_with_esc") || g:slimux_enable_close_with_esc != 0
+    if !exists('g:slimux_enable_close_with_esc') || g:slimux_enable_close_with_esc != 0
         nnoremap <buffer> <silent> <ESC> :hide<CR>
     endif
 
@@ -186,7 +189,7 @@ function! s:SelectPane(tmux_packet, ...)
     nnoremap <buffer> <silent> <Space> :call g:_SlimuxPickPaneFromBuf(g:SlimuxActiveConfigure, 1)<CR>
 
     " Set key mapping for pane index hitns
-    if !exists("g:slimux_pane_hint_map")
+    if !exists('g:slimux_pane_hint_map')
       let g:slimux_pane_hint_map = 'd'
     endif
     execute 'nnoremap <buffer> <silent> ' . g:slimux_pane_hint_map . ' :call system("' . g:slimux_tmux_path . ' display-panes")<CR>'
@@ -196,41 +199,41 @@ endfunction
 function! s:Send(tmux_packet)
 
     " Pane not selected! Save text and open selection dialog
-    if len(a:tmux_packet["target_pane"]) == 0
+    if len(a:tmux_packet['target_pane']) == 0
         let s:retry_send = a:tmux_packet
         return s:SelectPane(a:tmux_packet)
     endif
 
-    let target = a:tmux_packet["target_pane"]
-    let type = a:tmux_packet["type"]
+    let target = a:tmux_packet['target_pane']
+    let type = a:tmux_packet['type']
 
-    if type == "code" || type == "cmd"
+    if type ==# 'code' || type ==# 'cmd'
 
-      let text = a:tmux_packet["text"]
+      let text = a:tmux_packet['text']
 
-      if type == "code"
-        call s:ExecFileTypeFn("SlimuxPre_", [target])
-        let text = s:ExecFileTypeFn("SlimuxEscape_", [text])
+      if type ==# 'code'
+        call s:ExecFileTypeFn('SlimuxPre_', [target])
+        let text = s:ExecFileTypeFn('SlimuxEscape_', [text])
       endif
 
       if text[len(text)-1] !=# "\n"
         let text .= "\n"
       endif
 
-      let named_buffer = s:tmux_version >= '2.0' ? '-b Slimux' : ''
+      let named_buffer = s:tmux_version >=# '2.0' ? '-b Slimux' : ''
       call system(g:slimux_tmux_path . ' load-buffer ' . named_buffer . ' -', text)
       call system(g:slimux_tmux_path . ' paste-buffer ' . named_buffer . ' -p -d -t ' . target)
 
       call system(g:slimux_tmux_path . ' paste-buffer ' . named_buffer . ' -d -t ' . target)
 
-      if type == "code"
-        call s:ExecFileTypeFn("SlimuxPost_", [target])
+      if type ==# 'code'
+        call s:ExecFileTypeFn('SlimuxPost_', [target])
       endif
 
-    elseif type == 'keys'
+    elseif type ==# 'keys'
 
-      let keys = a:tmux_packet["keys"]
-      call system(g:slimux_tmux_path . " send-keys -t " . target . " " . keys)
+      let keys = a:tmux_packet['keys']
+      call system(g:slimux_tmux_path . ' send-keys -t ' . target . ' ' . keys)
 
     endif
 
@@ -242,15 +245,15 @@ endfunction
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 function! s:EscapeText(text)
-  return substitute(shellescape(a:text), "\\\\\\n", "\n", "g")
+  return substitute(shellescape(a:text), "\\\\\\n", "\n", 'g')
 endfunction
 
 function! s:ExecFileTypeFn(fn_name, args)
   let result = a:args[0]
 
-  if exists("&filetype")
+  if exists('&filetype')
     let fullname = a:fn_name . &filetype
-    if exists("*" . fullname)
+    if exists('*' . fullname)
       let result = call(fullname, a:args)
     end
   end
@@ -269,7 +272,7 @@ function! s:GetVisual() range
     silent normal! ""gvy
     let selection = getreg('"')
 
-    if exists("g:slimux_restore_selection_after_visual") && g:slimux_restore_selection_after_visual == 1
+    if exists('g:slimux_restore_selection_after_visual') && g:slimux_restore_selection_after_visual == 1
         " restore the selection, this only works if we don't change
         " pane selection buffer
         silent normal! gv
@@ -300,11 +303,11 @@ function! s:GetParagraph()
     let regtype_save = getregtype('"')
     let cb_save = &clipboard
     set clipboard&
-    let l:l = line(".")
-    let l:c = col(".")
+    let l:l = line('.')
+    let l:c = col('.')
 
     " Do the business:
-    silent normal ""yip
+    silent normal! ""yip
     let selection = getreg('"')
 
     call cursor(l:l, l:c)
@@ -320,23 +323,23 @@ endfunction
 " Code interface uses per buffer configuration
 
 function! SlimuxConfigureCode()
-  if !exists("b:code_packet")
-    let b:code_packet = { "target_pane": "", "type": "code" }
+  if !exists('b:code_packet')
+    let b:code_packet = { 'target_pane': '', 'type': 'code' }
   endif
   call s:SelectPane(b:code_packet)
 endfunction
 
 function! SlimuxSendCode(text)
-  if !exists("b:code_packet")
-    let b:code_packet = { "target_pane": "", "type": "code" }
+  if !exists('b:code_packet')
+    let b:code_packet = { 'target_pane': '', 'type': 'code' }
   endif
-  let b:code_packet["text"] = a:text
+  let b:code_packet['text'] = a:text
   call s:Send(b:code_packet)
 endfunction
 
 function! s:SlimeSendRange()  range abort
-    if !exists("b:code_packet")
-        let b:code_packet = { "target_pane": "", "type": "code" }
+    if !exists('b:code_packet')
+        let b:code_packet = { 'target_pane': '', 'type': 'code' }
     endif
     let rv = getreg('"')
     let rt = getregtype('"')
@@ -360,13 +363,13 @@ command! SlimuxREPLConfigure call SlimuxConfigureCode()
 
 " Command interface has only one global configuration
 
-let s:cmd_packet = { "target_pane": "", "type": "cmd" }
-let s:previous_cmd = ""
+let s:cmd_packet = { 'target_pane': '', 'type': 'cmd' }
+let s:previous_cmd = ''
 
 function! SlimuxSendCommand(cmd)
 
   let s:previous_cmd = a:cmd
-  let s:cmd_packet["text"] = a:cmd . "\n"
+  let s:cmd_packet['text'] = a:cmd . "\n"
   call s:Send(s:cmd_packet)
 
 endfunction
@@ -387,13 +390,13 @@ command! SlimuxShellConfigure call s:SelectPane(s:cmd_packet)
 " :SlimuxSendKeysPrompt
 " KEYS>C-C 'make run-server' Enter)
 
-let s:keys_packet = { "target_pane": "", "type": "keys" }
-let s:previous_keys = ""
+let s:keys_packet = { 'target_pane': '', 'type': 'keys' }
+let s:previous_keys = ''
 
 function! SlimuxSendKeys(keys)
 
   let s:previous_keys = a:keys
-  let s:keys_packet["keys"] = a:keys
+  let s:keys_packet['keys'] = a:keys
   call s:Send(s:keys_packet)
 
 endfunction
@@ -407,7 +410,7 @@ command! SlimuxSendKeysConfigure call s:SelectPane(s:keys_packet)
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Global interface (i.e. for repl, shell, and keys )
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-let s:global_conf = { "target_pane": "", "type": "global" }
+let s:global_conf = { 'target_pane': '', 'type': 'global' }
 
 command! SlimuxGlobalConfigure call s:SelectPane(s:global_conf)
 command! -nargs=? -complete=customlist,SlimuxGetPaneList SlimuxShellConfigure call s:SelectPane(s:cmd_packet, <q-args>)

@@ -35,14 +35,14 @@
 
 " Settings {{{1
 " Whether to load this plugin or not.
-if exists("g:slimux_racket_loaded")
+if exists('g:slimux_racket_loaded')
     finish
 endif
 let g:slimux_racket_loaded= 1
 
 " set Custom <Leader> for the slimux_racket plugin
 if !exists('g:slimux_racket_leader')
-    if exists( 'mapleader' ) && mapleader != ' '
+    if exists( 'mapleader' ) && mapleader !=# ' '
         let g:slimux_racket_leader = mapleader
     else
         let g:slimux_racket_leader = ','
@@ -65,7 +65,7 @@ endif
 
 function! SlimuxEscape_racket(text)
     " if text does not end with newline, add one
-    if a:text !~ "\n$"
+    if a:text !~# '\n$'
         let str_ret = a:text . '\n'
     else
         let str_ret = a:text
@@ -79,13 +79,13 @@ endfunction
 
 " Evaluate a racket 'define' statement
 function! Slimux_racket_eval_defun()
-    let pos = getpos(".")
+    let pos = getpos('.')
     let regContent = @"
     let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
     let [lhead, chead] = searchpairpos( '(', '', ')', 'bW', s:skip_sc)
     call cursor(lhead, chead)
-    silent! exec "normal! 99[(yab"
-    if getline('.')[0] == '('
+    silent! exec 'normal! 99[(yab'
+    if getline('.')[0] ==# '('
         call SlimuxSendCode(@" . "\n")
     else
         call SlimuxSendCode(getline('.') . "\n")
@@ -116,7 +116,7 @@ function! Slimux_racket_doc(...)
     if g:slimux_racket_xrepl
         echomsg a:0
         if a:0 <= 0
-            let s:word = expand("<cword>")
+            let s:word = expand('<cword>')
         else
             let s:word = a:1
         endif

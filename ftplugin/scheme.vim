@@ -29,14 +29,14 @@
 
 " Settings {{{1
 " Whether to load this plugin or not.
-if exists("g:slimux_scheme_loaded")
+if exists('g:slimux_scheme_loaded')
     finish
 endif
 let g:slimux_scheme_loaded= 1
 
 " set Custom <Leader> for the slimux_scheme plugin
 if !exists('g:slimux_scheme_leader')
-    if exists( 'mapleader' ) && mapleader != ' '
+    if exists( 'mapleader' ) && mapleader !=# ' '
         let g:slimux_scheme_leader = mapleader
     else
         let g:slimux_scheme_leader = ','
@@ -52,7 +52,7 @@ endif
 
 function! SlimuxEscape_scheme(text)
     " if text does not end with newline, add one
-    if a:text !~ "\n$"
+    if a:text !~# '\n$'
         let str_ret = a:text . '\n'
     else
         let str_ret = a:text
@@ -66,8 +66,8 @@ endfunction
 
 " Evaluate a scheme 'define' statement
 function! Slimux_scheme_eval_defun()
-    let pos = getpos(".")
-    silent! exec "normal! 99[(yab"
+    let pos = getpos('.')
+    silent! exec 'normal! 99[(yab'
     call SlimuxSendCode(@" . "\n")
     call setpos('.', pos)
 endfunction
@@ -79,7 +79,7 @@ endfunction
 
 " invoke restart by number
 function! Slimux_scheme_restart_by_number(num)
-    let sent_text="(restart ". a:num .")\n"
+    let sent_text='(restart '. a:num .")\n"
     call SlimuxSendCode(sent_text)
 endfunction
 
